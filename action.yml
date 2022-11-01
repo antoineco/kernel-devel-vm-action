@@ -1,0 +1,123 @@
+name: Kernel Builds VM
+description: Bootstraps a Lima instance with the selected Linux kernel version
+  for building and testing kernel modules.
+author: Antoine Cotten (@antoineco)
+branding:
+  icon: terminal
+  color: blue
+inputs:
+  kernel:
+    description: Desired kernel version, in semantic format.
+    required: true
+  os:
+    description: Version code of the Fedora Linux release.
+    default: f36
+outputs:
+  kernel:
+    description: Full version string of the running kernel.
+    value: ${{ steps.kernel-current.outputs.version }}
+  kernel-short:
+    description: Short, SemVer compatible version string of the running kernel.
+    value: ${{ steps.kernel-current.outputs.version-short }}
+  logs:
+    description: Location on the runner of the exported cloud-init logs.
+    value: ${{ steps.export-logs.outputs.path }}
+runs:
+  using: composite
+  steps:
+    - id: validate-input
+      shell: bash
+      run: |
+        echo '::group::Validate input parameters'
+        declare err
+        declare -i failed=0
+        if [[ ! ${{ inputs.kernel }} =~ ^[0-9]\.[0-9]+$ ]]; then
+          (( failed ++ ))
+          err="The provided 'kernel' parameter '${{ inputs.kernel }}' doesn't match the expected format"
+          echo "::error title=Invalid input::${err}"
+        fi
+        declare os=${{ inputs.os }}
+        if [[ -n "$os" && ! "$os" =~ ^f[0-9]{2}$ ]]; then
+          (( failed ++ ))
+          err="The provided 'os' parameter '${{ inputs.os }}' doesn't match the expected format"
+          echo "::error title=Invalid input::${err}"
+        fi
+        if (( failed )); then
+          exit 1
+        fi
+        echo 'Input OK'
+        echo '::endgroup::'
+    - id: image
+      uses: antoineco/fedora-qemu-img-info-action@v1
+      with:
+        os: ${{ !inputs.os && 'f36' || inputs.os }}
+    - id: gen-vm-name
+      shell: bash
+      run: |
+        echo '::group::Generate Lima instance name'
+        declare name="${GITHUB_ACTION#__}-${RANDOM}"
+        echo "Exporting Lima instance name '${name}'"
+        echo "LIMA_INSTANCE=${name}" >>"$GITHUB_ENV"
+        echo '::endgroup::'
+    - id: bootstrap
+      uses: pyTooling/Actions/with-post-step@2305ab20278915b0dd130c118098ff030dc78e2d
+      with:
+        main: >-
+          ${{ github.action_path }}/scripts/pytooling-bootstrap-main.sh
+          ${{ steps.image.outputs.url }}
+          ${{ steps.image.outputs.sha256sum }}
+          ${{ inputs.kernel }}
+          ${{ github.workspace }}
+        post: |-
+          ${{ github.action_path }}/scripts/pytooling-bootstrap-post.sh
+    - id: kernel-current
+      shell: bash
+      run: |
+        echo '::group::Read version of running Linux kernel'
+        source ${{ github.action_path }}/scripts/lib/host/kernel.sh
+        source ${{ github.action_path }}/scripts/lib/host/util.sh
+        declare arch kernel_current kernel_short
+        arch="$(util::linux_arch)"
+        kernel_current="$(kernel::current)"
+        echo "version=${kernel_current}" >>"$GITHUB_OUTPUT"
+        if [[ "$kernel_current" =~ ^([0-9]+\.[0-9]+(\.[0-9]+)?) ]]; then
+          kernel_short="${BASH_REMATCH[1]}"
+          echo "version-short=${kernel_short}" >>"$GITHUB_OUTPUT"
+        else
+          declare err="Unable to parse short version of running kernel ${kernel_current}"
+          echo "::error title=Invalid kernel version::${err}"
+          exit 1
+        fi
+        echo "Lima instance is running kernel '${kernel_current}' (${kernel_short})"
+        echo '::endgroup::'
+    - id: kernel-semver
+      uses: madhead/semver-utils@v2
+      with:
+        version: ${{ steps.kernel-current.outputs.version-short }}
+        satisfies: ${{ inputs.kernel }}.x
+        lenient: false
+    - id: kernel-check
+      shell: bash
+      run: |
+        echo '::group::Verify kernel version constraint'
+        if [[ ${{ steps.kernel-semver.outputs.satisfies }} != 'true' ]]; then
+          declare err='Running kernel ${{ steps.kernel-current.outputs.version-short }} does not satisfy constraint ${{ inputs.kernel }}.x'
+          echo "::error title=Wrong kernel version::${err}"
+          exit 1
+        fi
+        echo 'Running kernel ${{ steps.kernel-current.outputs.version-short }} satisfies constraint ${{ inputs.kernel }}.x'
+        echo '::endgroup::'
+    - id: export-logs
+      if: always() && steps.gen-vm-name.outcome == 'success' && steps.bootstrap.outcome != 'skipped'
+      shell: bash
+      run: |
+        echo '::group::Export cloud-init logs'
+        declare logs_path=/tmp/lima/${{ env.LIMA_INSTANCE }}
+        mkdir -p "$logs_path"
+        declare unit
+        for unit in cloud-init cloud-final; do
+          echo "Exporting messages for unit '${unit}.service' to ${logs_path}/${unit}.log"
+          lima sudo sh -c "journalctl -u ${unit}.service >${logs_path}/${unit}.log"
+        done
+        echo "path=${logs_path}" >>"$GITHUB_OUTPUT"
+        echo '::endgroup::'

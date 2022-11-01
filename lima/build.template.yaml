@@ -1,0 +1,72 @@
+# Lima VM definition for building and testing kernel modules against arbitrary
+# kernel versions.
+
+# Images are populated by lima::config::generate()
+images: null
+
+# Environment variables are populated by lima::config::generate()
+env:
+  KERNEL_VERSION: null
+  SCRIPTS_BASE: null
+
+cpus: 2
+memory: 6GiB
+
+# Additional mounts are appended by lima::config::generate()
+mounts:
+- location: /tmp/lima
+  writable: true
+
+containerd:
+  system: false
+  user: false
+
+provision:
+
+# Install supporting OS packages (build tools, etc.).
+- mode: system
+  script: |
+    #!/usr/bin/env bash
+    set -ex
+    dnf install -y make gcc bodhi-client
+
+# Install selected kernel.
+- mode: system
+  script: |
+    #!/usr/bin/env bash
+    set -eu
+    declare _
+    for _ in $(seq 1 10); do
+      [[ -x "$SCRIPTS_BASE"/install_kernel.sh ]] && break
+      echo "Lima hasn't synced the mounted workspace yet"
+      sleep 3
+    done
+    exec "$SCRIPTS_BASE"/install_kernel.sh "$KERNEL_VERSION"
+
+probes:
+
+- description: kernel-devel package is installed
+  script: |
+    #!/usr/bin/env bash
+    set -eu
+    declare _
+    for _ in $(seq 1 10); do
+      [[ -f "$SCRIPTS_BASE"/lib/builder/kernel.sh ]] && break
+      echo "Lima hasn't synced the mounted workspace yet"
+      sleep 3
+    done
+    source "$SCRIPTS_BASE"/lib/builder/kernel.sh
+    kernel::wait_installed "$KERNEL_VERSION"
+
+- description: bootloader entry was created
+  script: |
+    #!/usr/bin/env bash
+    set -eu
+    declare _
+    for _ in $(seq 1 10); do
+      [[ -f "$SCRIPTS_BASE"/lib/builder/os.sh ]] && break
+      echo "Lima hasn't synced the mounted workspace yet"
+      sleep 3
+    done
+    source "$SCRIPTS_BASE"/lib/builder/os.sh
+    os::bootloader::wait_entry "$KERNEL_VERSION"

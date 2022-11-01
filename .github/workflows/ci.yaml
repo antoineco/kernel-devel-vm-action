@@ -1,0 +1,69 @@
+name: Continuous Integration
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+permissions: {}
+
+jobs:
+
+  bootstrap:
+    name: Bootstrap a build instance
+    # Linux runners do not currently support nested virtualization (KVM)
+    runs-on: macos-12
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+        - kernel: '5.18'
+        - kernel: '6.0'
+          os: f37
+        - kernel: '6.1'
+          os: f38
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Get QEMU image info
+      id: image
+      # The outputs of this step are solely used for generating a cache key.
+      # The fedora-qemu-img-info Action is also used from within this Action to
+      # generate the Lima instance config. It is expected, but not guaranteed,
+      # that both invocations will return the same image checksum. For
+      # instance, not all mirrors synchronize at the same frequency, so
+      # different image versions may be found in different mirrors for a given
+      # OS version, especially shortly after a new release occurs upstream.
+      uses: antoineco/fedora-qemu-img-info-action@v1
+      with:
+        # Default 'os' matrix value should be kept in sync with action.yml
+        os: ${{ !matrix.os && 'f36' || matrix.os }}
+
+    - name: Lima image cache
+      uses: actions/cache@v3
+      with:
+        path: ~/Library/Caches/lima/download
+        # Default 'os' matrix value should be kept in sync with action.yml
+        key: ${{ github.job }}-${{ runner.os }}-lima-${{ !matrix.os && 'f36' || matrix.os }}-${{ steps.image.outputs.sha256sum }}
+        restore-keys: ${{ github.job }}-${{ runner.os }}-lima-${{ !matrix.os && 'f36' || matrix.os }}-
+
+    - name: Bootstrap Lima instance
+      id: builder
+      uses: ./
+      with:
+        kernel: ${{ matrix.kernel }}
+        os: ${{ matrix.os }}
+
+    - name: Collect cloud-init logs from Lima instance
+      if: failure() && steps.builder.outcome != 'skipped' && env.LIMA_INSTANCE
+      run: mv -v ${{ steps.builder.outputs.logs }}/cloud-*.log ~/.lima/${{ env.LIMA_INSTANCE }}/
+
+    - name: Upload Lima instance logs
+      if: failure() && steps.builder.outcome != 'skipped' && env.LIMA_INSTANCE
+      uses: actions/upload-artifact@v3
+      with:
+        name: lima-logs-${{ matrix.kernel }}
+        path: ~/.lima/${{ env.LIMA_INSTANCE }}/*.log
