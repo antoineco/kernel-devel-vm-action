@@ -66,7 +66,7 @@ util::sha256sum() {
 	os="$(uname -s)" || return
 
 	local cmd
-	local -a cmd_args=()
+	local -a cmd_args
 
 	case "$os" in
 		Linux)
@@ -98,7 +98,7 @@ util::cp() {
 	local os
 	os="$(uname -s)" || return
 
-	local -a cp_args=()
+	local -a cp_args
 
 	case "$os" in
 		Linux)

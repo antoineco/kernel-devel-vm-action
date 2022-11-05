@@ -54,8 +54,13 @@ lima::config::generate() {
 # Outputs:
 #   None
 lima::vm::bootstrap() {
+	local -a cmd_args
+	if lima::supports_timeout; then
+		cmd_args+=( '--timeout=20m' )
+	fi
+
 	>&2 echo "Bootstrapping Lima instance '${LIMA_INSTANCE}'"
-	limactl start --name="$LIMA_INSTANCE" \
+	limactl start --name="$LIMA_INSTANCE" "${cmd_args[@]}" \
 		"${BASH_SOURCE[0]%/*}"/../../../lima/build.yaml
 }
 
@@ -151,4 +156,14 @@ lima::cache::refresh() {
 			return
 		fi
 	done
+}
+
+# Returns whether the installed Lima version supports the 'timeout' flag.
+#
+# Arguments:
+#   None
+# Outputs:
+#   Returns 0 if the installed version supports customizable timeout, >0 otherwise
+lima::supports_timeout() {
+	limactl start --help | grep -q '^\ \+--timeout duration'
 }
