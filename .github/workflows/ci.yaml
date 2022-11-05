@@ -36,8 +36,6 @@ jobs:
         brew unlink go@1.17 lima
         brew install --HEAD lima
 
-    - uses: actions/checkout@v3
-
     - name: Get QEMU image info
       id: image
       # The outputs of this step are solely used for generating a cache key.
@@ -58,7 +56,8 @@ jobs:
         path: ~/Library/Caches/lima/download
         # Default 'os' matrix value should be kept in sync with action.yml
         key: ${{ github.job }}-${{ runner.os }}-lima-${{ !matrix.os && 'f36' || matrix.os }}-${{ steps.image.outputs.sha256sum }}
-        restore-keys: ${{ github.job }}-${{ runner.os }}-lima-${{ !matrix.os && 'f36' || matrix.os }}-
+
+    - uses: actions/checkout@v3
 
     - name: Bootstrap Lima instance
       id: builder
