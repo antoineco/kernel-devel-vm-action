@@ -41,7 +41,7 @@ kernel::build::lookup() {
 					# the loop before returning the exit code with printf.
 					continue
 				fi
-				if [[ "$line" =~ (kernel-${kernel//\./\\.}\.[a-z0-9\.-]+\.fc${os_version_id}) ]]; then
+				if [[ "$line" =~ (kernel-${kernel//\./\\.}(\.[0-9])?-[0-9]+(\.rc[0-9]+(\.[0-9]+)?)?\.fc${os_version_id}) ]]; then
 					>&2 echo "Found matching build ID ${line}"
 					buildid="${BASH_REMATCH[1]}"
 					close_body=1
