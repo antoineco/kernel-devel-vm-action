@@ -11,7 +11,7 @@ inputs:
     required: true
   os:
     description: Version code of the Fedora Linux release.
-    default: f36
+    default: f37
 outputs:
   kernel:
     description: Full version string of the running kernel.
@@ -50,7 +50,7 @@ runs:
     - id: image
       uses: antoineco/fedora-qemu-img-info-action@v1
       with:
-        os: ${{ !inputs.os && 'f36' || inputs.os }}
+        os: ${{ !inputs.os && 'f37' || inputs.os }}
     - id: gen-vm-name
       shell: bash
       run: |
