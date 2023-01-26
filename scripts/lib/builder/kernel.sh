@@ -32,8 +32,8 @@ kernel::build::lookup() {
 			>&2 echo "Reading results page $(( i )) for status '${status}'"
 			# read exits with a non-zero code if the last read input doesn't end
 			# with a newline character. The printf without newline that follows the
-			# curl command ensures that the final input not only contains curl's
-			# exit code, but causes read to fail so we can capture the return value.
+			# command ensures that the final input not only contains its exit code,
+			# but causes read to fail so we can capture the return value.
 			# Ref. https://unix.stackexchange.com/a/176703/152409
 			while IFS= read -r line || ! return="$line"; do
 				if (( close_body )); then
