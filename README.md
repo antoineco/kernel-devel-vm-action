@@ -97,24 +97,6 @@ jobs:
 For more elaborate usage examples, take a look at the [build workflow][wl-ci]
 for `broadcom-wl`, or the [CI workflow][ci] for this Action.
 
-## Known Issues
-
-### Timeout waiting for instance initialization
-
-After 10 minutes, while waiting for the completion of initialization scripts,
-Lima exits with an error code and prints the following error message:
-
-> `did not receive an event with the "running" status`
-
-This timeout is often hit for two reasons:
-
-1. Downloading RPMs from Bodhi is very slow.
-1. GitHub-hosted macOS runners are slow and `dracut` takes a lot of time to
-   build the `initramfs` upon installation of `kernel-devel` packages.
-
-There is an issue open at [lima-vm/lima#418][lima-issue-418] to enable
-configuring Lima's timeout, which is currently hardcoded to 10 minutes.
-
 [fedora]: https://getfedora.org
 [mirrors]: https://admin.fedoraproject.org/mirrormanager/
 [bodhi]: https://bodhi.fedoraproject.org
@@ -135,4 +117,3 @@ configuring Lima's timeout, which is currently hardcoded to 10 minutes.
 [ci]: .github/workflows/ci.yaml
 
 [actions-issue-183]: https://github.com/actions/runner-images/issues/183#issuecomment-610723516
-[lima-issue-418]: https://github.com/lima-vm/lima/issues/418
