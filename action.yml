@@ -60,16 +60,20 @@ runs:
         echo "LIMA_INSTANCE=${name}" >>"$GITHUB_ENV"
         echo '::endgroup::'
     - id: bootstrap
-      uses: pyTooling/Actions/with-post-step@2305ab20278915b0dd130c118098ff030dc78e2d
+      uses: pyTooling/Actions/with-post-step@v0.4.5
       with:
+        # with-post-step executes the given commands using child_process.spawn() with shell=true.
+        # On macOS 12, /bin/sh defaults to Bash 3.2, which is too old to run these scripts. We use 'exec' to replace the
+        # /bin/sh process with the shell defined by the script's shebang.
+        # Ref. https://nodejs.org/docs/latest-v16.x/api/child_process.html#child_processspawncommand-args-options
         main: >-
-          ${{ github.action_path }}/scripts/pytooling-bootstrap-main.sh
+          exec ${{ github.action_path }}/scripts/pytooling-bootstrap-main.sh
           ${{ steps.image.outputs.url }}
           ${{ steps.image.outputs.sha256sum }}
           ${{ inputs.kernel }}
           ${{ github.workspace }}
         post: |-
-          ${{ github.action_path }}/scripts/pytooling-bootstrap-post.sh
+          exec ${{ github.action_path }}/scripts/pytooling-bootstrap-post.sh
     - id: kernel-current
       shell: bash
       run: |
@@ -91,7 +95,7 @@ runs:
         echo "Lima instance is running kernel '${kernel_current}' (${kernel_short})"
         echo '::endgroup::'
     - id: kernel-semver
-      uses: madhead/semver-utils@v2
+      uses: madhead/semver-utils@v3
       with:
         version: ${{ steps.kernel-current.outputs.version-short }}
         satisfies: ${{ inputs.kernel }}.x
