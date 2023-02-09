@@ -74,12 +74,14 @@ jobs:
     strategy:
       matrix:
         include:
-        - kernel: '5.16'
-          os: f36
         - kernel: '5.19'
+          os: f36
+        - kernel: '6.0'
           os: f37
         - kernel: '6.1'
           os: f38
+        - kernel: '6.2'
+          os: f39
 
     steps:
     - name: Bootstrap Lima instance
