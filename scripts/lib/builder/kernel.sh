@@ -113,10 +113,22 @@ kernel::build::install() {
 	local kernel
 	kernel="$(kernel::from_buildid "$buildid")" || return
 
-	dnf install -y \
-		"${tmpdir}/kernel-core-${kernel}.rpm" \
-		"${tmpdir}/kernel-devel-${kernel}.rpm" \
-		|| return
+	local -a rpms_candidates=(
+		"${tmpdir}/kernel-core-${kernel}.rpm"
+		"${tmpdir}/kernel-modules-${kernel}.rpm"
+		"${tmpdir}/kernel-modules-core-${kernel}.rpm"
+		"${tmpdir}/kernel-devel-${kernel}.rpm"
+	)
+
+	local -a rpms
+	local rpm
+	for rpm in "${rpms_candidates[@]}"; do
+		if [[ -f "$rpm" ]]; then
+			rpms+=( "$rpm" )
+		fi
+	done
+
+	dnf install -y "${rpms[@]}" || return
 
 	rm -rf "${tmpdir}"
 }
