@@ -19,12 +19,12 @@ jobs:
       fail-fast: false
       matrix:
         include:
-        - kernel: '5.19'
-          os: f36
         - kernel: '6.0'
+          os: f36
         - kernel: '6.1'
-          os: f38
+          os: f37
         - kernel: '6.2'
+        - kernel: '6.3'
           os: f39
 
     steps:
@@ -40,14 +40,14 @@ jobs:
       uses: antoineco/fedora-qemu-img-info-action@v1
       with:
         # Default 'os' matrix value should be kept in sync with action.yml
-        os: ${{ !matrix.os && 'f37' || matrix.os }}
+        os: ${{ !matrix.os && 'f38' || matrix.os }}
 
     - name: Lima image cache
       uses: actions/cache@v3
       with:
         path: ~/Library/Caches/lima/download
         # Default 'os' matrix value should be kept in sync with action.yml
-        key: ${{ github.job }}-${{ runner.os }}-lima-${{ !matrix.os && 'f37' || matrix.os }}-${{ steps.image.outputs.sha256sum }}
+        key: ${{ github.job }}-${{ runner.os }}-lima-${{ !matrix.os && 'f38' || matrix.os }}-${{ steps.image.outputs.sha256sum }}
 
     - uses: actions/checkout@v3
 
