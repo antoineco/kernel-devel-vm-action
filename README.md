@@ -74,13 +74,11 @@ jobs:
     strategy:
       matrix:
         include:
-        - kernel: '5.19'
-          os: f36
-        - kernel: '6.0'
+        - kernel: '6.3'
           os: f37
-        - kernel: '6.1'
+        - kernel: '6.4'
           os: f38
-        - kernel: '6.2'
+        - kernel: '6.5'
           os: f39
 
     steps:
