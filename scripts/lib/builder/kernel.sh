@@ -128,7 +128,9 @@ kernel::build::install() {
 		fi
 	done
 
-	dnf install -y "${rpms[@]}" || return
+	dnf install -y "${rpms[@]}" \
+	|| rpm -Uvh --oldpackage "${rpms[@]}" \
+	|| return
 
 	rm -rf "${tmpdir}"
 }
