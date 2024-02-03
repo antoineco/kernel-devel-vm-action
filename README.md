@@ -28,16 +28,6 @@ specific kernel version.
 - [Lima][lima] ≥ 0.12.x
 - [yq][yq] ≥ 4.x
 
-> **Warning**
->
-> GitHub-hosted [Linux runners][gh-runners] do not currently support nested
-> virtualization (ref. [actions/runner-images#183][actions-issue-183]).
-> However, macOS runners, such as `macos-12`, do have virtualization enabled
-> _and_ Lima pre-installed, which makes them ideal candidates for running this
-> Action.
->
-> Another option is to use [self-hosted runners][gh-selfhosted].
-
 ### Inputs
 
 - `kernel` **(required)**: The desired kernel version in _\<major>.\<minor>_
@@ -69,7 +59,7 @@ on: push
 
 jobs:
   build:
-    runs-on: macos-12
+    runs-on: ubuntu-latest
 
     strategy:
       matrix:
@@ -106,14 +96,9 @@ for `broadcom-wl`, or the [CI workflow][ci] for this Action.
 
 [yq]: https://mikefarah.gitbook.io/yq/
 
-[gh-runners]: https://docs.github.com/en/actions/using-github-hosted-runners/about-github-hosted-runners#supported-runners-and-hardware-resources
-[gh-selfhosted]: https://docs.github.com/en/actions/hosting-your-own-runners/about-self-hosted-runners
-
 [semver]: https://semver.org
 
 [wl]: https://github.com/antoineco/broadcom-wl
 [wl-ci]: https://github.com/antoineco/broadcom-wl/blob/patch-linux4.7/.github/workflows/ci.yaml
 
 [ci]: .github/workflows/ci.yaml
-
-[actions-issue-183]: https://github.com/actions/runner-images/issues/183#issuecomment-610723516
