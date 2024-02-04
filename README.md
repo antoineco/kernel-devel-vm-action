@@ -33,7 +33,7 @@ specific kernel version.
 - `kernel` **(required)**: The desired kernel version in _\<major>.\<minor>_
   semantic format (e.g. "5.19").
 - `os`: The version code of the Fedora Linux release to bootstrap the instance
-  with (e.g. "f38"). Defaults to `f38`.
+  with (e.g. "f38"). Defaults to `f39`.
 
 ### Outputs
 
