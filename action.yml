@@ -60,7 +60,7 @@ runs:
         echo "LIMA_INSTANCE=${name}" >>"$GITHUB_ENV"
         echo '::endgroup::'
     - id: bootstrap
-      uses: pyTooling/Actions/with-post-step@v0.4.5
+      uses: pyTooling/Actions/with-post-step@v1.0.1
       with:
         # with-post-step executes the given commands using child_process.spawn() with shell=true.
         # On macOS 12, /bin/sh defaults to Bash 3.2, which is too old to run these scripts. We use 'exec' to replace the
@@ -95,7 +95,7 @@ runs:
         echo "Lima instance is running kernel '${kernel_current}' (${kernel_short})"
         echo '::endgroup::'
     - id: kernel-semver
-      uses: madhead/semver-utils@v3
+      uses: madhead/semver-utils@v4
       with:
         version: ${{ steps.kernel-current.outputs.version-short }}
         satisfies: ${{ inputs.kernel }}.x
